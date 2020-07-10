@@ -20,11 +20,7 @@ message SequenceResponse {
 }
 
 service SequencesService {
-  rpc ReturnFactorial (SequenceRequest) returns (SequenceResponse) {}
+  rpc ReturnCalculationResult (SequenceRequest) returns (SequenceResponse) {}
   
-  rpc StreamFactorial (SequenceRequest) returns (stream SequenceResponse) {}
-
-  rpc ReturnFibonacci (SequenceRequest) returns (SequenceResponse) {}
-  
-  rpc StreamFibonacci (SequenceRequest) returns (stream SequenceResponse) {}
+  rpc StreamCalculationResults (SequenceRequest) returns (stream SequenceResponse) {}
 }

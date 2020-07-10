@@ -5,6 +5,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import com.grpcserver.grpc._
 
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 class SequencesServiceImpl(implicit mat: Materializer) extends SequencesService {
@@ -42,37 +43,36 @@ class SequencesServiceImpl(implicit mat: Materializer) extends SequencesService 
 
     n match {
       case 0 => baseCaseReturnValue
-      case _ => if (n < 0) baseCaseReturnValue else _fibonacci(1)
+      case _ => if (n < 0) baseCaseReturnValue else _fibonacci(0)
     }
   }
 
-  override def returnFactorial(input: SequenceRequest): Future[SequenceResponse] = {
-    val tn = if (input.termNumber + 1 <= maxFactorialTermNumber) input.termNumber else maxFactorialTermNumber
+  override def returnCalculationResult(in: SequenceRequest): Future[SequenceResponse] = {
+    val calculationType = in.`type`
+    val maxTermNumber = if (calculationType.equals(0)) maxFactorialTermNumber else maxFibonacciTermNumber
 
-    println(s"Calculate Factorial Sequence with input term number = ${input.termNumber} => f(${input.termNumber})")
+    val tn = if (in.termNumber <= maxTermNumber) in.termNumber else maxTermNumber
 
-    Future.successful(SequenceResponse(factorial(tn)))
+    println(s"Calculate ${calculationType} Sequence with input term number = ${in.termNumber} => f(${in.termNumber})")
+
+    Future.successful(SequenceResponse(if (calculationType.equals(0)) factorial(tn) else fibonacciSequence(tn)))
   }
 
-  override def streamFactorial(input: SequenceRequest): Source[SequenceResponse, NotUsed] = {
-    val tn = if (input.termNumber + 1 <= maxFactorialTermNumber) input.termNumber else maxFactorialTermNumber
-    val range = List.range(0, tn + 1)
+    override def streamCalculationResults(in: SequenceRequest): Source[SequenceResponse, NotUsed] = {
+      val calculationType = in.`type`
 
-    Source(range).map(n => SequenceResponse(factorial(n)))
-  }
+      println(s"Stream ${calculationType} Sequence with input from term number from 0 ${in.termNumber}")
 
-  override def returnFibonacci(input: SequenceRequest): Future[SequenceResponse] = {
-    val tn = if (input.termNumber + 1 <= maxFibonacciTermNumber) input.termNumber else maxFibonacciTermNumber
+      val maxTermNumber = if (calculationType.equals(0)) maxFactorialTermNumber else maxFibonacciTermNumber
 
-    println(s"Calculate Fibonacci Sequence with input term number = ${input.termNumber} => f(${input.termNumber})")
+      println(maxTermNumber)
 
-    Future.successful(SequenceResponse(fibonacciSequence(tn)))
-  }
+      val tn = if (in.termNumber <= maxTermNumber) in.termNumber else maxTermNumber
 
-  override def streamFibonacci(input: SequenceRequest): Source[SequenceResponse, NotUsed] = {
-    val tn = if (input.termNumber + 1 <= maxFibonacciTermNumber) input.termNumber else maxFibonacciTermNumber
-    val range = List.range(0, tn + 1)
+      val range = List.range(0, tn + 1)
 
-    Source(range).map(n => SequenceResponse(fibonacciSequence(n)))
-  }
+      Source(range)
+        .throttle(1, .5.seconds)
+        .map(n => SequenceResponse(if (calculationType.equals(0)) factorial(n) else fibonacciSequence(n)))
+    }
 }
