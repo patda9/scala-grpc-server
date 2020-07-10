@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "com.grpcserver.grpc";
+option java_outer_classname = "SequencesProto";
+
+package sequence;
+
+enum SquenceType {
+  FACTORIAL = 0;
+  FIBONACCI = 1;
+}
+
+message SequenceRequest {
+  int32 term_number = 1;
+  SquenceType type = 2;
+}
+
+message SequenceResponse {
+  repeated uint32 data = 1;
+}
+
+service SequencesService {
+  rpc ReturnFactorial (SequenceRequest) returns (SequenceResponse) {}
+  
+  rpc StreamFactorial (SequenceRequest) returns (stream SequenceResponse) {}
+
+  rpc ReturnFibonacci (SequenceRequest) returns (SequenceResponse) {}
+  
+  rpc StreamFibonacci (SequenceRequest) returns (stream SequenceResponse) {}
+}
